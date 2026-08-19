@@ -1,0 +1,11 @@
+{
+  "domain": "magyar_munkanapok",
+  "name": "Magyar munkanapok",
+  "codeowners": ["@Lecso1977"],
+  "config_flow": true,
+  "documentation": "https://github.com/Lecso1977/magyar-munkanapok",
+  "integration_type": "service",
+  "iot_class": "local_polling",
+  "issue_tracker": "https://github.com/Lecso1977/magyar-munkanapok/issues",
+  "version": "1.0.0"
+}
