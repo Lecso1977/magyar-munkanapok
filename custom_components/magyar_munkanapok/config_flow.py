@@ -34,22 +34,17 @@ class MagyarMunkanapokConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         config_entry: config_entries.ConfigEntry,
     ) -> config_entries.OptionsFlow:
         """Get the options flow for this handler."""
-        return MagyarMunkanapokOptionsFlowHandler(config_entry)
+        return MagyarMunkanapokOptionsFlowHandler()
 
 
 class MagyarMunkanapokOptionsFlowHandler(config_entries.OptionsFlow):
     """Handle options flow for Magyar munkanapok."""
-
-    def __init__(self, config_entry: config_entries.ConfigEntry) -> None:
-        """Initialize options flow."""
-        self.config_entry = config_entry
 
     async def async_step_init(
         self, user_input: dict[str, Any] | None = None
     ) -> FlowResult:
         """Manage the options."""
         if user_input is not None:
-            # Tisztítjuk a beviteli mezők tartalmát (szóközök, felesleges sorvégjelek eltávolítása)
             cleaned_input = {
                 CONF_CUSTOM_WORKDAYS: user_input.get(CONF_CUSTOM_WORKDAYS, "").strip(),
                 CONF_CUSTOM_HOLIDAYS: user_input.get(CONF_CUSTOM_HOLIDAYS, "").strip(),
