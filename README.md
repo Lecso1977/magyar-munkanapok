@@ -23,7 +23,7 @@ A **Magyar munkanapok** egy egyedi Home Assistant integráció, amellyel egyszer
 1. Nyisd meg a **HACS**-ot a Home Assistantban.
 2. A jobb felső sarokban válaszd az **Egyedi repók** menüpontot.
 3. Add hozzá ezt a tárhelyet: `https://github.com/Lecso1977/magyar-munkanapok`
-   * **Típus:** Integration
+   * **Típus:** Integráció
 4. Kattints a **Letöltés** gombra.
 5. Indítsd újra a Home Assistantot.
 
