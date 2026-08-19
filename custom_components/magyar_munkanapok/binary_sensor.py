@@ -59,7 +59,6 @@ def parse_custom_dates(raw_text: str) -> dict[date, str]:
     if not raw_text:
         return parsed
 
-    # Elválasztójelek kezelése (új sor vagy vessző)
     cleaned = raw_text.replace("\n", ",").split(",")
     for item in cleaned:
         item = item.strip()
@@ -126,14 +125,10 @@ class MagyarMunkanapokSensor(BinarySensorEntity):
         today_str = today.isoformat()
         current_year = today.year
 
-        # Beállításokból az egyedi napok beolvasása
         options = self._entry.options
         custom_workdays = parse_custom_dates(options.get(CONF_CUSTOM_WORKDAYS, ""))
         custom_holidays = parse_custom_dates(options.get(CONF_CUSTOM_HOLIDAYS, ""))
 
-        # --- PRIORITÁSI LÁNCSZÁMÍTÁS ---
-
-        # 1. Egyedi felülbírálás (Felhasználó által megadott)
         if today in custom_workdays:
             desc = custom_workdays[today]
             self._is_on = True
@@ -146,7 +141,6 @@ class MagyarMunkanapokSensor(BinarySensorEntity):
             self._reason = f"Egyedi munkaszüneti nap{f' ({desc})' if desc else ''}"
             return
 
-        # 2. Évente változó hivatalos áthelyezett napok
         if today_str in OFFICIAL_SHIFTED_WORKDAYS:
             self._is_on = True
             self._reason = OFFICIAL_SHIFTED_WORKDAYS[today_str]
@@ -157,22 +151,19 @@ class MagyarMunkanapokSensor(BinarySensorEntity):
             self._reason = OFFICIAL_SHIFTED_HOLIDAYS[today_str]
             return
 
-        # 3. Fix állami ünnepek
         month_day = (today.month, today.day)
         if month_day in FIX_HOLIDAYS:
             self._is_on = False
             self._reason = FIX_HOLIDAYS[month_day]
             return
 
-        # 4. Vándorló ünnepnapok (Húsvét alapú)
         movable_holidays = get_movable_holidays(current_year)
         if today in movable_holidays:
             self._is_on = False
             self._reason = movable_holidays[today]
             return
 
-        # 5. Hétvégi / Hétköznapi alapszabály
-        if today.weekday() >= 5:  # Szombat (5) vagy Vasárnap (6)
+        if today.weekday() >= 5:
             self._is_on = False
             self._reason = "Hétvége"
         else:
