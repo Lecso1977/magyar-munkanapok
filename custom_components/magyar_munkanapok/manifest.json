@@ -8,5 +8,5 @@
   "iot_class": "local_polling",
   "issue_tracker": "https://github.com/Lecso1977/magyar-munkanapok/issues",
   "license": "MIT",
-  "version": "0.1.3"
+  "version": "0.1.5"
 }
