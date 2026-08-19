@@ -4,57 +4,20 @@ from __future__ import annotations
 from datetime import date, timedelta
 from typing import Any
 
-from homeassistant.components.binary_sensor import BinarySensorEntity
+from homeassistant.components.binary_sensor import (
+    BinarySensorDeviceClass,
+    BinarySensorEntity,
+)
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .const import (
-    CONF_CUSTOM_HOLIDAYS,
-    CONF_CUSTOM_WORKDAYS,
-    DOMAIN,
-    FIX_HOLIDAYS,
-    NAME,
-    OFFICIAL_SHIFTED_HOLIDAYS,
-    OFFICIAL_SHIFTED_WORKDAYS,
-)
-
-
-def get_easter_sunday(year: int) -> date:
-    """Calculates Easter Sunday date using Anonymous Gregorian algorithm."""
-    a = year % 19
-    b = year // 100
-    c = year % 100
-    d = b // 4
-    e = b % 4
-    f = (b + 8) // 25
-    g = (b - f + 1) // 3
-    h = (19 * a + b - d - g + 15) % 30
-    i = c // 4
-    k = c % 4
-    l = (32 + 2 * e + 2 * i - h - k) % 7
-    m = (a + 11 * h + 22 * l) // 451
-    month = (h + l - 7 * m + 114) // 31
-    day = ((h + l - 7 * m + 114) % 31) + 1
-    return date(year, month, day)
-
-
-def get_movable_holidays(year: int) -> dict[date, str]:
-    """Returns all Easter-based movable holidays for a given year."""
-    easter = get_easter_sunday(year)
-    good_friday = easter - timedelta(days=2)
-    easter_monday = easter + timedelta(days=1)
-    whit_monday = easter + timedelta(days=50)
-
-    return {
-        good_friday: "Nagypéntek",
-        easter_monday: "Húsvéthétfő",
-        whit_monday: "Pünkösdhétfő",
-    }
+from .const import CONF_CUSTOM_HOLIDAYS, CONF_CUSTOM_WORKDAYS, DOMAIN
+from .hu_holidays import HungarianHolidays
 
 
 def parse_custom_dates(raw_text: str) -> dict[date, str]:
-    """Parses raw text input into a dictionary of date -> description."""
+    """Segédfüggvény az egyedi dátumok feldolgozásához."""
     parsed: dict[date, str] = {}
     if not raw_text:
         return parsed
@@ -97,75 +60,68 @@ class MagyarMunkanapokSensor(BinarySensorEntity):
     _attr_has_entity_name = True
     _attr_name = "Magyar munkanapok"
     _attr_icon = "mdi:calendar-check"
+    _attr_device_class = BinarySensorDeviceClass.RUNNING
 
     def __init__(self, entry: ConfigEntry) -> None:
         """Initialize the sensor."""
         self._entry = entry
-        self._attr_unique_id = entry.entry_id
-        self._attr_translation_key = "magyar_munkanapok"
-        self._is_on: bool = False
-        self._reason: str = ""
+        self._attr_unique_id = f"{entry.entry_id}_binary_sensor"
+        self._holidays = HungarianHolidays()
 
     @property
     def is_on(self) -> bool:
-        """Return True if today is a workday."""
-        return self._is_on
-
-    @property
-    def extra_state_attributes(self) -> dict[str, Any]:
-        """Return extra attributes for the sensor."""
-        return {
-            "ok": self._reason,
-            "munkanap": self._is_on,
-        }
-
-    async def async_update(self) -> None:
-        """Update the sensor state based on today's date."""
+        """Return true if today is a workday."""
         today = date.today()
-        today_str = today.isoformat()
-        current_year = today.year
-
         options = self._entry.options
+
         custom_workdays = parse_custom_dates(options.get(CONF_CUSTOM_WORKDAYS, ""))
         custom_holidays = parse_custom_dates(options.get(CONF_CUSTOM_HOLIDAYS, ""))
 
         if today in custom_workdays:
-            desc = custom_workdays[today]
-            self._is_on = True
-            self._reason = f"Egyedi munkanap{f' ({desc})' if desc else ''}"
-            return
-
+            return True
         if today in custom_holidays:
-            desc = custom_holidays[today]
-            self._is_on = False
-            self._reason = f"Egyedi munkaszüneti nap{f' ({desc})' if desc else ''}"
-            return
+            return False
 
-        if today_str in OFFICIAL_SHIFTED_WORKDAYS:
-            self._is_on = True
-            self._reason = OFFICIAL_SHIFTED_WORKDAYS[today_str]
-            return
+        return self._holidays.is_workday(today)
 
-        if today_str in OFFICIAL_SHIFTED_HOLIDAYS:
-            self._is_on = False
-            self._reason = OFFICIAL_SHIFTED_HOLIDAYS[today_str]
-            return
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        """Return device state attributes."""
+        today = date.today()
+        options = self._entry.options
 
-        month_day = (today.month, today.day)
-        if month_day in FIX_HOLIDAYS:
-            self._is_on = False
-            self._reason = FIX_HOLIDAYS[month_day]
-            return
+        custom_workdays = parse_custom_dates(options.get(CONF_CUSTOM_WORKDAYS, ""))
+        custom_holidays = parse_custom_dates(options.get(CONF_CUSTOM_HOLIDAYS, ""))
 
-        movable_holidays = get_movable_holidays(current_year)
-        if today in movable_holidays:
-            self._is_on = False
-            self._reason = movable_holidays[today]
-            return
+        is_workday = self.is_on
+        day_type = "Munkanap" if is_workday else "Munkaszuneti nap"
 
-        if today.weekday() >= 5:
-            self._is_on = False
-            self._reason = "Hétvége"
-        else:
-            self._is_on = True
-            self._reason = "Munkanap"
+        # Következő munkanap megkeresése
+        next_workday = today + timedelta(days=1)
+        while True:
+            if next_workday in custom_workdays:
+                break
+            if next_workday not in custom_holidays and self._holidays.is_workday(next_workday):
+                break
+            next_workday += timedelta(days=1)
+
+        # Következő munkaszüneti nap megkeresése
+        next_holiday = today + timedelta(days=1)
+        next_holiday_desc = ""
+        while True:
+            if next_holiday in custom_holidays:
+                next_holiday_desc = custom_holidays[next_holiday] or "Egyedi munkaszüneti nap"
+                break
+            if next_holiday not in custom_workdays and not self._holidays.is_workday(next_holiday):
+                next_holiday_desc = self._holidays.get_holiday_name(next_holiday) or "Hétvége / Ünnepnap"
+                break
+            next_holiday += timedelta(days=1)
+
+        return {
+            "nap_tipusa": day_type,
+            "munkanap": is_workday,
+            "hetvege": today.weekday() in (5, 6),
+            "kovetkezo_munkanap": next_workday.isoformat(),
+            "kovetkezo_munkaszuneti_nap": next_holiday.isoformat(),
+            "kovetkezo_munkaszuneti_nap_leirasa": next_holiday_desc,
+        }
