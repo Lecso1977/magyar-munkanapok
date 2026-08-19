@@ -13,11 +13,13 @@
   "options": {
     "step": {
       "init": {
-        "title": "Magyar munkanapok beállításai",
-        "description": "Itt adhatsz hozzá egyedi munkanapokat és munkaszüneti napokat. Formátum: ÉÉÉÉ-HH-NN (pl. 2026-07-01), vagylagosan megjegyzéssel: ÉÉÉÉ-HH-NN:Leírás (pl. 2026-07-01:Semmelweis-nap). Több dátumot vesszővel vagy új sorral választhatsz el.",
+        "title": "Egyedi napok beállítása",
+        "description": "A meglévő egyedi napok megőrzéséhez hagyd bepipálva a kívánt tételeket. Új napot a lenti mezőkben adhatsz hozzá YYYY-MM-DD vagy YYYY-MM-DD:Leírás formátumban.",
         "data": {
-          "custom_workdays": "Egyedi munkanapok",
-          "custom_holidays": "Egyedi munkaszüneti napok"
+          "keep_workdays": "Megtartandó egyedi munkanapok",
+          "new_workday": "Új egyedi munkanap hozzáadása (pl. 2026-10-24:Munkaszombat)",
+          "keep_holidays": "Megtartandó egyedi munkaszüneti napok",
+          "new_holiday": "Új egyedi munkaszüneti nap hozzáadása (pl. 2026-12-31:Pihenőnap)"
         }
       }
     }
