@@ -7,5 +7,5 @@
   "integration_type": "service",
   "iot_class": "local_polling",
   "issue_tracker": "https://github.com/Lecso1977/magyar-munkanapok/issues",
-  "version": "1.0.0"
+  "version": "0.1.0"
 }
