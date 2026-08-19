@@ -1,6 +1,6 @@
 # Magyar munkanapok (Hungarian workdays)
 
-![Magyar munkanapok](mmlogo.svg)
+![Magyar munkanapok](icon.png)
 
 A **Magyar munkanapok** egy egyedi Home Assistant integráció, amellyel egyszerűen és megbízhatóan nyomon követheted a magyarországi munkanapokat, munkaszüneti napokat, fix és vándorló ünnepnapokat, valamint az áthelyezett munkanapokat.
 
