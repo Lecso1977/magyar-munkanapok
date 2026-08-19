@@ -96,16 +96,17 @@ class MagyarMunkanapokSensor(BinarySensorEntity):
     """Representation of the Magyar munkanapok binary sensor."""
 
     _attr_has_entity_name = True
-    _attr_name = None
+    _attr_name = "Magyar munkanapok"
     _attr_icon = "mdi:calendar-check"
 
-    def __init__(self, entry: ConfigEntry) -> None:
+   def __init__(self, entry: ConfigEntry) -> None:
         """Initialize the sensor."""
         self._entry = entry
-        self._attr_unique_id = f"{DOMAIN}_{entry.entry_id}"
+        self._attr_unique_id = entry.entry_id
+        self._attr_translation_key = "magyar_munkanapok"
         self._is_on: bool = False
         self._reason: str = ""
-
+    
     @property
     def is_on(self) -> bool:
         """Return True if today is a workday."""
